@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Hardhat
+cache/
+artifacts/
+coverage/
+coverage.json
+typechain-types/
+deployments/localcofhe
+
+# Build
+dist/
+frontend/dist/
+*.tsbuildinfo
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Testing
+.openzeppelin/

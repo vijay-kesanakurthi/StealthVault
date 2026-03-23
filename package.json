@@ -1,0 +1,41 @@
+{
+  "name": "stealthvault-protocol",
+  "version": "0.1.0",
+  "description": "Privacy-preserving execution protocol — encrypted strategy execution on Fhenix",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "node": "hardhat node",
+    "deploy": "hardhat run scripts/deploy.ts --network localhost",
+    "deploy:sepolia": "hardhat run scripts/deploy.ts --network eth-sepolia",
+    "deploy:arb-sepolia": "hardhat run scripts/deploy.ts --network arb-sepolia",
+    "frontend": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build",
+    "clean": "hardhat clean && rimraf typechain-types"
+  },
+  "devDependencies": {
+    "@fhenixprotocol/cofhe-contracts": "^0.0.13",
+    "@fhenixprotocol/cofhe-mock-contracts": "^0.3.1",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "@types/chai": "^4.2.0",
+    "@types/mocha": ">=9.1.0",
+    "@types/node": ">=18.0.0",
+    "chai": "^4.2.0",
+    "cofhe-hardhat-plugin": "^0.3.1",
+    "cofhejs": "^0.3.1",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.4.0",
+    "hardhat": "^2.22.19",
+    "hardhat-gas-reporter": "^2.3.0",
+    "rimraf": "^5.0.0",
+    "ts-node": ">=8.0.0",
+    "typechain": "^8.3.0",
+    "typescript": ">=4.5.0"
+  }
+}
