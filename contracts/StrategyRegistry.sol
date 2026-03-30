@@ -226,11 +226,11 @@ contract StrategyRegistry {
 
         ebool priceLtBuy = FHE.lt(currentEnc, s.buyPrice);
         FHE.allowThis(priceLtBuy);
-        FHE.allowGlobal(priceLtBuy);  // Allow anyone (including keepers) to decrypt
+        FHE.allowGlobal(priceLtBuy); // Allow anyone (including keepers) to decrypt
 
         ebool priceGtSell = FHE.gt(currentEnc, s.sellPrice);
         FHE.allowThis(priceGtSell);
-        FHE.allowGlobal(priceGtSell);  // Allow anyone (including keepers) to decrypt
+        FHE.allowGlobal(priceGtSell); // Allow anyone (including keepers) to decrypt
 
         // Signal only — no ETH transfer. Keepers watch StrategyEvaluated.
         emit ExecutorReward(msg.sender);
@@ -259,12 +259,16 @@ contract StrategyRegistry {
         if (nonce <= lastSettledNonce[strategyId]) revert AlreadySettled();
 
         uint256 navBefore = vaultValue[strategyId];
-        
+
         // Apply vault NAV changes based on strategy execution
         if (action == ACTION_BUY) {
-            vaultValue[strategyId] = navBefore > 0 ? (navBefore * 110) / 100 : 0;
+            vaultValue[strategyId] = navBefore > 0
+                ? (navBefore * 110) / 100
+                : 0;
         } else if (action == ACTION_SELL) {
-            vaultValue[strategyId] = navBefore > 0 ? (navBefore * 105) / 100 : 0;
+            vaultValue[strategyId] = navBefore > 0
+                ? (navBefore * 105) / 100
+                : 0;
         }
         // HOLD: vaultValue stays unchanged
 
@@ -275,8 +279,7 @@ contract StrategyRegistry {
         // Reward keeper for non-HOLD actions when contract has sufficient balance
         // Note: Even with zero vault, we reward successful strategy execution to incentivize keepers
         if (
-            action != ACTION_HOLD &&
-            address(this).balance >= KEEPER_REWARD_WEI
+            action != ACTION_HOLD && address(this).balance >= KEEPER_REWARD_WEI
         ) {
             (bool paid, ) = payable(msg.sender).call{value: KEEPER_REWARD_WEI}(
                 ""

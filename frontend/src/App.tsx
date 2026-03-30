@@ -1101,10 +1101,10 @@ function App() {
                       <button
                         type="button"
                         disabled={busy}
-                        onClick={() => void deposit(strategy.strategyId, "0.0001")}
+                        onClick={() => void deposit(strategy.strategyId, "0.0004")}
                         className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium transition hover:bg-violet-500 disabled:opacity-50"
                       >
-                        💰 Deposit 0.0001 ETH
+                        💰 Deposit 0.0004 ETH
                       </button>
                       <button
                         type="button"
