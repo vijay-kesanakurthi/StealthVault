@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#6366f1"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="1" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Circular background -->
+  <circle cx="24" cy="24" r="20" fill="url(#grad)" filter="url(#glow)"/>
+  
+  <!-- Inner circle -->
+  <circle cx="24" cy="24" r="16" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  
+  <!-- Lock icon -->
+  <g transform="translate(24,24)">
+    <!-- Lock body -->
+    <rect x="-4" y="-1" width="8" height="6" rx="1.5" fill="#1e1b4b"/>
+    
+    <!-- Lock shackle -->
+    <path d="M-2.5 -1v-2a2.5 2.5 0 0 1 5 0v2" stroke="#1e1b4b" 
+          stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    
+    <!-- Keyhole -->
+    <circle cx="0" cy="1.5" r="1" fill="#8b5cf6"/>
+    <rect x="-0.3" y="2.2" width="0.6" height="1.5" rx="0.3" fill="#8b5cf6"/>
+  </g>
+  
+  <!-- Subtle sparkles -->
+  <circle cx="12" cy="12" r="1" fill="#fbbf24" opacity="0.6"/>
+  <circle cx="36" cy="16" r="0.8" fill="#fbbf24" opacity="0.5"/>
+  <circle cx="16" cy="36" r="0.6" fill="#fbbf24" opacity="0.7"/>
+  <circle cx="32" cy="32" r="0.9" fill="#fbbf24" opacity="0.4"/>
+</svg>

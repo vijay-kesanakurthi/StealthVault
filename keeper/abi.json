@@ -1,0 +1,12 @@
+[
+  "event StrategyEvaluated(bytes32 indexed strategyId,uint256 nonce,uint256 oraclePrice,uint256 isBelowBuyCipher,uint256 isAboveSellCipher)",
+  "event OutcomeApplied(bytes32 indexed strategyId,uint256 nonce,uint8 action,uint256 newVaultValue)",
+  "event KeeperRewardPaid(address indexed keeper,uint256 amount)",
+  "function applyResult(bytes32 strategyId,uint256 nonce,uint8 action)",
+  "function vaultValue(bytes32 strategyId) view returns (uint256)",
+  "function executionNonce(bytes32 strategyId) view returns (uint256)",
+  "function lastSettledNonce(bytes32 strategyId) view returns (uint256)",
+  "function KEEPER_REWARD_WEI() view returns (uint256)",
+  "function getStrategy(bytes32 strategyId) view returns (uint256 buyPrice_,uint256 sellPrice_,address owner,bool active,bool paused,uint256 registeredAt)",
+  "function fundKeeperRewards() payable"
+]

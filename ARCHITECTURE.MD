@@ -1,21 +1,30 @@
-# 🏗️ StealthVault Protocol — Architecture
+# 🏗️ StealthVault Protocol — Architecture (Final)
 
 ---
 
 ## 🎯 Vision
 
-StealthVault is a **privacy-preserving execution protocol** that enables on-chain strategy execution using encrypted data.
+StealthVault is a privacy-preserving DeFi execution protocol where:
 
-Unlike traditional DeFi systems, strategy logic is never exposed — only outcomes are visible.
+- Strategy logic is encrypted
+- Execution is on-chain and verifiable
+- Outcomes are public but trustless
+
+"Execution is transparent. Strategy is invisible."
 
 ---
 
 ## 🧠 Core Idea
 
-> Separate **data visibility** from **execution correctness**
+Separate:
 
-- Execution → On-chain (verifiable)
-- Strategy → Encrypted (private)
+- What you know (strategy) → private
+- What the chain does (execution) → public
+
+Using Fully Homomorphic Encryption (FHE):
+
+- Contracts compute on encrypted data
+- No decryption happens on-chain
 
 ---
 
@@ -23,93 +32,143 @@ Unlike traditional DeFi systems, strategy logic is never exposed — only outcom
 
 ---
 
-### 1. 🔐 Strategy Registry
+### 1. Strategy Registry (On-Chain)
 
-Stores encrypted strategies submitted by users.
+Stores encrypted strategy thresholds.
 
-#### Responsibilities:
+**Responsibilities:**
 
-- Register encrypted logic
-- Assign unique strategy IDs
-- Map strategies to owners
+- Accept encrypted inputs (`InEuint64`)
+- Store FHE values (`euint64`)
+- Manage lifecycle (activate / pause / deactivate)
 
-#### Key Properties:
+**Key Properties:**
 
-- Immutable storage
-- Encrypted inputs only
-
----
-
-### 2. ⚙️ Execution Engine (FHE Core)
-
-Evaluates strategies using encrypted computation.
-
-#### Responsibilities:
-
-- Read encrypted strategy
-- Evaluate conditions (e.g., price < X)
-- Trigger execution signals
-
-#### Key Properties:
-
-- No decryption
-- Deterministic execution
+- Strategy is never visible
+- Only owner has original logic
+- Uses FHE permissions
 
 ---
 
-### 3. 🏦 Vault Layer
+### 2. Execution Engine (FHE Layer)
 
-Manages funds tied to strategies.
+Performs encrypted computation.
 
-#### Types:
+**Flow:**
 
-- Single-user vault
-- Multi-user vault (future)
+- Oracle price (public) → encrypted on-chain
+- Compare with encrypted thresholds:
+  - price < buy
+  - price > sell
 
-#### Responsibilities:
+**Output:**
+
+- Emits ciphertext handles (`ebool`)
+- No plaintext decision revealed
+
+**Key Properties:**
+
+- Fully on-chain
+- Deterministic
+- Privacy-preserving
+
+---
+
+### 3. Keeper Network (Off-Chain Bridge)
+
+Bridges encrypted computation to real action.
+
+**Responsibilities:**
+
+- Listen to `StrategyEvaluated` event
+- Decrypt results using CofheJS
+- Decide action:
+  - BUY / SELL / HOLD
+- Call `applyResult`
+
+**Why needed:**
+Smart contracts cannot decrypt FHE data
+
+---
+
+### 4. Vault Layer (On-Chain Capital)
+
+Manages user funds per strategy.
+
+**Responsibilities:**
 
 - Accept deposits
-- Link strategy
-- Handle execution outcomes
+- Track balances:
+  - totalDeposits
+  - userDeposits
+- Maintain NAV (`vaultValue`)
+
+**Execution Logic:**
+
+- BUY → +10%
+- SELL → +5%
+- HOLD → no change
+
+**Key Properties:**
+
+- Funds are real (ETH)
+- Strategy impact is simulated (MVP)
 
 ---
 
-### 4. 👥 Liquidity Pool Layer (Future)
+### 5. Execution State Control (Nonce System)
 
-Enables shared participation in strategies.
+Prevents race conditions and replay attacks.
 
-#### Responsibilities:
+**Mechanism:**
 
-- Pool funds from multiple users
-- Execute shared encrypted strategy
+- `executionNonce` increments on each execution
+- `applyResult` must match latest nonce
+- `lastSettledNonce` prevents reuse
+
+**Guarantees:**
+
+- One execution → one settlement
+- No double execution
+- No stale updates
 
 ---
 
-### 5. 📊 Result Layer
+### 6. Incentive Layer (Keepers)
 
-Exposes execution outcomes.
+Encourages decentralized execution.
 
-#### Visible Data:
+**Mechanism:**
 
-- Profit / Loss
-- Execution status
-
-#### Hidden Data:
-
-- Strategy logic
-- Conditions
+- Keeper calls `applyResult`
+- Receives reward (0.0001 ETH) if:
+  - Valid execution
+  - Non-HOLD action
+  - Contract funded
 
 ---
 
 ## 🔄 System Flow
 
-```
-User → Encrypt Strategy → Strategy Registry
-     → Create Vault → Deposit Funds
-     → Execution Engine Evaluates
-     → Vault Executes
-     → Result Returned
-```
+User
+→ Encrypts strategy (buy/sell thresholds)
+→ Calls registerStrategy()
+User
+→ Deposits ETH into vault
+Anyone (Executor)
+→ Calls executeStrategy(price)
+Contract
+→ Performs FHE comparison
+→ Emits encrypted result
+Keeper (Off-chain)
+→ Listens to event
+→ Decrypts result
+→ Determines action
+Keeper
+→ Calls applyResult()
+Contract
+→ Updates vault NAV
+→ Rewards keeper
 
 ---
 
@@ -119,66 +178,63 @@ User → Encrypt Strategy → Strategy Registry
 | -------------------- | ---------- |
 | Strategy Logic       | Encrypted  |
 | Execution Conditions | Encrypted  |
+| Oracle Price         | Public     |
 | Vault Balances       | Public     |
-| Execution Results    | Public     |
+| Execution Result     | Public     |
+| Decision Logic       | Hidden     |
 
 ---
 
 ## ⚙️ Tech Stack
 
-### Smart Contracts
+**Smart Contracts**
 
-- Solidity (Fhenix-enabled EVM)
-- Hardhat
+- Solidity (0.8.25)
+- Fhenix CoFHE
 
-### Encryption
+**Encryption**
 
 - Cofhe SDK
-- Fully Homomorphic Encryption (FHE)
+- FHE (euint64, ebool)
 
-### Frontend
+**Frontend**
 
 - React + TypeScript
 
-### Web3
+**Web3**
 
-- Ethers.js / Wagmi
+- Wagmi
+- WalletConnect / Injected wallets
+
+**Off-chain**
+
+- Keeper bot (Node.js + CofheJS)
 
 ---
 
 ## 🧠 Design Principles
 
 - Privacy-first execution
-- Minimal on-chain exposure
-- Modular extensibility
-- Protocol-first architecture
+- Deterministic logic
+- Permissionless participation
+- Modular architecture
+- Trustless system
 
 ---
 
 ## 🚀 Future Extensions
 
-- Oracle integration (real price feeds)
-- Cross-chain execution
+- Real oracle integration (Chainlink)
+- Multi-user pooled vaults
 - AI-generated strategies
-- Institutional vaults
+- Cross-chain execution
+- Real trading instead of simulated NAV
 
 ---
 
-## ⚠️ Constraints
+## ⚠️ Current Limitations
 
 - FHE computation overhead
-- Limited debugging visibility
-- MVP uses simulated execution
-
----
-
-## 🏆 Success Criteria
-
-- Strategy remains encrypted end-to-end
-- Execution works correctly
-- Vault flow is functional
-- Demo clearly shows privacy advantage
-
----
-
-> “Execution is transparent. Strategy is invisible.”
+- Requires off-chain keeper
+- Vault returns are simulated
+- Hard to debug encrypted flows

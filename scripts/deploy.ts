@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import hre, { ethers } from "hardhat";
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -11,6 +11,12 @@ async function main() {
 
   const address = await registry.getAddress();
   console.log("StrategyRegistry deployed to:", address);
+
+  if (hre.network.name === "eth-sepolia") {
+    console.log(
+      "Keeper: in keeper/.env set CONTRACT_ADDRESS above, RPC_URL or SEPOLIA_RPC_URL to Sepolia, PRIVATE_KEY to a funded key, FHE_ENV=TESTNET.",
+    );
+  }
 }
 
 main().catch((error) => {

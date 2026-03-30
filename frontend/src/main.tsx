@@ -15,5 +15,5 @@ createRoot(document.getElementById("root")!).render(
         <App />
       </QueryClientProvider>
     </WagmiProvider>
-  </StrictMode>
+  </StrictMode>,
 );

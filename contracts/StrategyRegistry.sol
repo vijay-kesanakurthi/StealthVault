@@ -12,14 +12,14 @@ import {FHE, euint64, ebool, InEuint64} from "@fhenixprotocol/cofhe-contracts/FH
  *          outcome applied to capital → permissionless keepers execute + settle (`executeStrategy` + `applyResult`).
  *
  * @dev `executionNonce` ties each `StrategyEvaluated` event to exactly one `applyResult` (no races when multiple executes land).
- *      Oracle price is public + trivially encrypted for FHE; strategy uses `InEuint64` (production) or demo trivial encrypt.
+ *      Oracle price is public + trivially encrypted for FHE; strategy uses encrypted thresholds for private execution.
  */
 contract StrategyRegistry {
     uint8 public constant ACTION_HOLD = 0;
     uint8 public constant ACTION_BUY = 1;
     uint8 public constant ACTION_SELL = 2;
 
-    uint256 public constant KEEPER_REWARD_WEI = 0.001 ether;
+    uint256 public constant KEEPER_REWARD_WEI = 0.0001 ether;
 
     struct RegisteredStrategy {
         euint64 buyPrice;
@@ -85,6 +85,8 @@ contract StrategyRegistry {
     error WithdrawTransferFailed();
     error StaleExecution();
     error AlreadySettled();
+    /// @dev Validation: buy threshold must be strictly below sell threshold.
+    error InvalidThresholds();
 
     modifier nonReentrant() {
         require(!locked, "Reentrancy");
@@ -94,6 +96,14 @@ contract StrategyRegistry {
     }
 
     receive() external payable {
+        emit FundingReceived(msg.sender, msg.value);
+    }
+
+    /**
+     * @notice Fund the contract to pay keeper rewards (alternative to receive())
+     */
+    function fundKeeperRewards() external payable {
+        require(msg.value > 0, "Must send ETH");
         emit FundingReceived(msg.sender, msg.value);
     }
 
@@ -115,10 +125,11 @@ contract StrategyRegistry {
         return _registerCore(bp, sp);
     }
 
-    function registerStrategyDemo(
+    function registerStrategySimple(
         uint64 buyPlain,
         uint64 sellPlain
     ) external returns (bytes32 strategyId) {
+        if (buyPlain >= sellPlain) revert InvalidThresholds();
         euint64 bp = FHE.asEuint64(uint256(buyPlain));
         euint64 sp = FHE.asEuint64(uint256(sellPlain));
         return _registerCore(bp, sp);
@@ -209,14 +220,19 @@ contract StrategyRegistry {
         euint64 currentEnc = FHE.asEuint64(oraclePricePublic);
         FHE.allowThis(currentEnc);
 
+        // Re-allow thresholds loaded from storage so the TaskManager accepts them in this tx (CoFHE ACL).
+        FHE.allowThis(s.buyPrice);
+        FHE.allowThis(s.sellPrice);
+
         ebool priceLtBuy = FHE.lt(currentEnc, s.buyPrice);
         FHE.allowThis(priceLtBuy);
-        FHE.allowSender(priceLtBuy);
+        FHE.allowGlobal(priceLtBuy);  // Allow anyone (including keepers) to decrypt
 
         ebool priceGtSell = FHE.gt(currentEnc, s.sellPrice);
         FHE.allowThis(priceGtSell);
-        FHE.allowSender(priceGtSell);
+        FHE.allowGlobal(priceGtSell);  // Allow anyone (including keepers) to decrypt
 
+        // Signal only — no ETH transfer. Keepers watch StrategyEvaluated.
         emit ExecutorReward(msg.sender);
         emit StrategyEvaluated(
             strategyId,
@@ -243,21 +259,22 @@ contract StrategyRegistry {
         if (nonce <= lastSettledNonce[strategyId]) revert AlreadySettled();
 
         uint256 navBefore = vaultValue[strategyId];
-        if (navBefore > 0) {
-            if (action == ACTION_BUY) {
-                vaultValue[strategyId] = (navBefore * 110) / 100;
-            } else if (action == ACTION_SELL) {
-                vaultValue[strategyId] = (navBefore * 105) / 100;
-            }
+        
+        // Apply vault NAV changes based on strategy execution
+        if (action == ACTION_BUY) {
+            vaultValue[strategyId] = navBefore > 0 ? (navBefore * 110) / 100 : 0;
+        } else if (action == ACTION_SELL) {
+            vaultValue[strategyId] = navBefore > 0 ? (navBefore * 105) / 100 : 0;
         }
+        // HOLD: vaultValue stays unchanged
 
         lastSettledNonce[strategyId] = nonce;
 
         emit OutcomeApplied(strategyId, nonce, action, vaultValue[strategyId]);
 
-        // Reward only when there was vault capital and keeper delivered a non-HOLD outcome (reduces execute-spam drain)
+        // Reward keeper for non-HOLD actions when contract has sufficient balance
+        // Note: Even with zero vault, we reward successful strategy execution to incentivize keepers
         if (
-            navBefore > 0 &&
             action != ACTION_HOLD &&
             address(this).balance >= KEEPER_REWARD_WEI
         ) {

@@ -1,42 +1,29 @@
-import { http, createConfig } from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
-import { metaMask, walletConnect, injected } from "wagmi/connectors";
+import { createConfig, http } from "wagmi";
+import { sepolia } from "wagmi/chains";
+import {
+  coinbaseWallet,
+  injected,
+  metaMask,
+  walletConnect,
+} from "wagmi/connectors";
 
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID;
 
+const connectors = [
+  metaMask(),
+  coinbaseWallet({ appName: "StealthVault" }),
+  injected(),
+  ...(projectId ? [walletConnect({ projectId })] : []),
+];
+
 export const config = createConfig({
-  chains: [mainnet, sepolia],
-
-  connectors: [
-    // ✅ Explicit MetaMask (priority)
-    metaMask(),
-
-    // ✅ Fallback injected wallets (Brave, etc.)
-    injected(),
-
-    // ✅ WalletConnect (mobile + others)
-    ...(projectId
-      ? [
-          walletConnect({
-            projectId,
-            metadata: {
-              name: "StealthVault",
-              description:
-                "Private Strategy Vault — encrypted execution on Fhenix",
-              url:
-                typeof window !== "undefined"
-                  ? window.location.origin
-                  : "http://localhost:5173",
-            },
-            showQrModal: true,
-          }),
-        ]
-      : []),
-  ],
-
+  chains: [sepolia],
+  connectors,
   transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
+    [sepolia.id]: http(
+      import.meta.env.VITE_SEPOLIA_RPC_URL ||
+        "https://ethereum-sepolia.publicnode.com",
+    ),
   },
 });
 
