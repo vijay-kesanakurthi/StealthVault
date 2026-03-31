@@ -10,6 +10,8 @@ StealthVault leverages **Fully Homomorphic Encryption (FHE)** to enable private,
 
 ---
 
+Contract Address: 0xA0B6cd1182D72A623856a6B4C89a6568FF775FBe
+
 ## 🎯 **What It Does**
 
 StealthVault is a privacy-preserving DeFi execution protocol that allows traders to:
