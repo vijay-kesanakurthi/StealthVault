@@ -1,6 +1,11 @@
 const { ethers } = require("ethers");
 const { provider, wallet, contractAddress } = require("./config.js");
 
+// Start health check server for Render
+if (process.env.NODE_ENV === 'production') {
+  require('./health.js');
+}
+
 /** @param {import("ethers").Contract} c */
 function parseAllContractLogs(c, receipt) {
   const out = { OutcomeApplied: null, KeeperRewardPaid: null };
@@ -22,6 +27,9 @@ const { initFHE, getFHE } = require("./fhe.js");
 const contract = new ethers.Contract(contractAddress, abi, wallet);
 
 const POLL_MS = Number(process.env.POLL_INTERVAL_MS || 12_000);
+
+// Keep-alive for Render deployment
+const KEEP_ALIVE_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
 async function handleStrategyEvaluated(
   strategyId,
@@ -176,6 +184,12 @@ async function start() {
     } catch (err) {
       const msg = err?.shortMessage || err?.message || String(err);
       console.error("⚠️  Monitoring error:", msg);
+      
+      // Prevent crash on network errors
+      if (msg.includes('timeout') || msg.includes('network')) {
+        console.log('🔄 Network error, continuing monitoring...');
+        return;
+      }
     }
   }, POLL_MS);
 }
